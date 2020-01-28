@@ -1,0 +1,46 @@
+{
+  "name": "profiler-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node lib/index.js",
+    "dev": "npm run build && npm run start",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "lint": "eslint src/**.ts --ext .ts",
+    "lint:fix": "npm run lint -- --fix"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/pubsub": "^1.4.0",
+    "date-fns": "^2.9.0",
+    "express": "^4.17.1",
+    "firebase-admin": "^8.9.2",
+    "firebase-tools": "^7.12.1",
+    "mkdirp": "^1.0.3",
+    "mkdirp-promise": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.2",
+    "@types/lodash": "^4.14.149",
+    "@types/mkdirp-promise": "^5.0.0",
+    "@types/node": "^13.5.0",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jsdoc": "^21.0.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "firebase-functions-test": "^0.1.6",
+    "prettier": "^1.19.1",
+    "typescript": "^3.2.2"
+  }
+}
