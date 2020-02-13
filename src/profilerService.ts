@@ -1,9 +1,15 @@
 import * as admin from 'firebase-admin';
-import { readFile, mkdirSync, existsSync, writeFileSync } from 'fs';
+import { readFile, mkdirSync, existsSync, writeFileSync, unlinkSync } from 'fs';
 import { promisify } from 'util';
 import { dirname } from 'path';
 import { format } from 'date-fns';
+import { Logging } from '@google-cloud/logging';
 import { runCommand, to } from './utils';
+import { MINS_TO_S_CONVERSION } from './constants';
+// const { Logging } = require('@google-cloud/logging'); // eslint-disable-line
+
+// Creates a client
+const logging = new Logging();
 
 const readFilePromise = promisify(readFile);
 
@@ -14,16 +20,17 @@ const readFilePromise = promisify(readFile);
  */
 async function profileDatabase(
   outputPath: string,
-  projectName: string,
+  projectName?: string,
   profileDuration?: any,
 ): Promise<any> {
-  const duration = profileDuration || '30'; // in seconds
+  const duration = profileDuration * MINS_TO_S_CONVERSION || '30'; // in seconds
   const outFolder = dirname(outputPath);
   try {
     // Create folder for file path
     if (!existsSync(outFolder)) {
       mkdirSync(outFolder);
     }
+
     // Create file if it doesn't exist (fix issue with firebase-tools not finding file)
     if (!existsSync(outputPath)) {
       writeFileSync(outputPath, '');
@@ -33,24 +40,26 @@ async function profileDatabase(
     throw err;
   }
 
-  const commandArgs = [
+  const commandArgs: string[] = [
     'database:profile',
     '--raw',
     '-o',
     outputPath,
     '--project',
-    projectName,
+    projectName || '',
     '-d',
-    duration,
+    duration?.toString() || '30',
   ];
   console.log('Running command with args:', commandArgs);
-  
+
   if (process.env.FIREBASE_TOKEN) {
     commandArgs.push('--token', process.env.FIREBASE_TOKEN);
   } else {
-    console.warn('NOTE: Running without FIREBASE_TOKEN can cause authentication issues')
+    console.warn(
+      'NOTE: Running without FIREBASE_TOKEN can cause authentication issues',
+    );
   }
-  
+
   try {
     // Call database profiler
     const results = await runCommand({
@@ -113,10 +122,11 @@ async function parseResults(resultsPath: string): Promise<any[]> {
 async function getServiceAccount(): Promise<any> {
   // Load from environment variable
   if (process.env.SERVICE_ACCOUNT) {
+    console.log('Loading service account from environment variable');
     try {
       return JSON.parse(process.env.SERVICE_ACCOUNT);
     } catch (err) {
-      console.log('Error parsing SERVICE_ACCOUNT env variable');
+      console.error('Error parsing SERVICE_ACCOUNT env variable:', err);
       throw err;
     }
   }
@@ -124,6 +134,7 @@ async function getServiceAccount(): Promise<any> {
   // Load from local file
   const serviceAccountPath = './serviceAccount.json';
   if (existsSync(serviceAccountPath)) {
+    console.log('Loading service account from local file');
     const saStr = await readFilePromise(serviceAccountPath);
     try {
       return JSON.parse(saStr.toString());
@@ -132,11 +143,13 @@ async function getServiceAccount(): Promise<any> {
       throw err;
     }
   }
-  console.log('Service Account not found');
+  const serviceSccountErr = 'Service Account not found';
+  console.error(serviceSccountErr);
+  throw new Error(serviceSccountErr);
 }
 
 interface UploadSettings {
-  projectId?: string;
+  project?: string;
   bucketName?: string;
 }
 /**
@@ -152,19 +165,23 @@ async function uploadResults(
   console.log(
     `Writing profiler results cloud storage path: ${cloudStorageFilePath}...`,
   );
+  // Load service account from environment variable falling back to local file
   const sa = await getServiceAccount();
   const credential =
     admin.credential.cert(sa) || admin.credential.applicationDefault();
   const projectId =
-    (settings && settings.projectId) ||
-    process.env.GCP_PROJECT ||
-    (sa && sa['project-id']);
+    settings?.project ||
+    sa?.project_id ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT;
   const bucketName =
     (settings && settings.bucketName) || `${projectId}.appspot.com`;
+
   admin.initializeApp({
     credential,
     databaseURL: `https://${projectId}.firebaseio.com`,
   });
+
   try {
     const stringifiedResults = JSON.stringify(resultsToUpload, null, 2);
     const results = await admin
@@ -182,25 +199,50 @@ async function uploadResults(
   }
 }
 
+interface ProfileAndUploadOptions {
+  /* Time to run profiler */
+  duration: number;
+  project: string;
+}
+
 /**
- * @param data - Data from pub/sub message
- * @param attributes - Message attributes
+ * @param options - Options for profiling and uploading
  */
 export async function profileAndUpload(
-  data?: any,
-  attributes?: any,
+  options?: ProfileAndUploadOptions,
 ): Promise<any> {
-  console.log('Called profile and upload', data, attributes);
-  const projectName = (data && data.project) || process.env.GCP_PROJECT;
+  console.log('Called profile and upload', options);
   const now = new Date();
   const currentDateStamp = format(now, 'MM-dd-yyyy');
   const currentTimeStamp = format(now, 'H:mm:ss.SSS');
-  const filePath = `./${currentTimeStamp}.json`;
+  const localFilePath = `./${currentTimeStamp}.json`;
+
   // Run database profiler
-  await profileDatabase(filePath, projectName, data && data.duration);
+  await profileDatabase(localFilePath, options?.project, options?.duration);
+
   // Parse results from file into JSON
-  const parsedResults = await parseResults(filePath);
+  const parsedResults = await parseResults(localFilePath);
+
+  // Remove local file
+  unlinkSync(localFilePath);
+
+  // Write results to Stackdriver
+  const log = logging.log('my-log');
+  // Create array of log entries
+  const stackdriverEntries: any[] = [];
+  parsedResults.forEach(parsedLine => {
+    const resource = {
+      // This example targets the "global" resource for simplicity
+      type: 'global',
+    };
+    stackdriverEntries.push(log.entry({ resource }, parsedLine));
+  });
+  // Write log entries all at once
+  await log.write(stackdriverEntries);
+
+  // Write profiler results to Cloud Storage
   const cloudStorageFilePath = `profiler-service-results/${currentDateStamp}/${currentTimeStamp}.json`;
-  // Write profiler results to external
-  await uploadResults(cloudStorageFilePath, parsedResults);
+  await uploadResults(cloudStorageFilePath, parsedResults, {
+    project: options?.project,
+  });
 }

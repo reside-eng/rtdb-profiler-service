@@ -1,0 +1,55 @@
+name: Verify App
+
+on: [pull_request]
+
+jobs:
+  build-deploy:
+    name: Verify, Build, and Deploy
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [12.x]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }} on ${{ matrix.os }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v1
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install Dependencies
+        env:
+          CI: true
+        run: yarn install --frozen-lockfile
+
+      - name: Archive NPM Error Logs
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: npm-error-logs
+          path: /home/runner/.npm/_logs
+
+      - name: Verify App
+        run: |
+          yarn lint
+
+      # Build app bundles
+      - name: Build App
+        if: success()
+        env:
+          NODE_ENV: production
+        run: |
+          npm run build
