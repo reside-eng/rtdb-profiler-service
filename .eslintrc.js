@@ -27,7 +27,7 @@ module.exports = {
         tsx: 'never',
       },
     ],
-    
+
     // FIXME: Remove when we are using a different logger other than console
     'no-console': 0,
     // FIXME: Remove once we fix all the <any> type definitions
