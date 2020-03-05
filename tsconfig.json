@@ -7,13 +7,12 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "esModuleInterop": true   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
+    /* Enables emit interoperability between CommonJS and ES Modules via
+    creation of namespace objects for all imports. Implies
+    'allowSyntheticDefaultImports'. */
+    "esModuleInterop": true
   },
   "compileOnSave": true,
-  "include": [
-    "src"
-  ],
-  "typeRoots": [
-    "./node_modules/@types"
-  ],
+  "include": ["src"],
+  "typeRoots": ["./node_modules/@types"]
 }

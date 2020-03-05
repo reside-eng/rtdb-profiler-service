@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { Logging } from '@google-cloud/logging';
 import { runCommand, to } from './utils';
 import { MINS_TO_S_CONVERSION } from './constants';
-// const { Logging } = require('@google-cloud/logging'); // eslint-disable-line
 
 // Creates a client
 const logging = new Logging();
@@ -69,6 +68,7 @@ async function profileDatabase(
     return results;
   } catch (err) {
     console.error('Error running firebase command with args:', commandArgs);
+    throw err;
   }
 }
 
@@ -208,7 +208,7 @@ interface ProfileAndUploadOptions {
 /**
  * @param options - Options for profiling and uploading
  */
-export async function profileAndUpload(
+export default async function profileAndUpload(
   options?: ProfileAndUploadOptions,
 ): Promise<any> {
   console.log('Called profile and upload', options);
