@@ -10,9 +10,9 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "start": "node lib/index.js",
-    "dev": "npm run build && npm run start",
+    "dev": "yarn build && yarn start",
     "lint": "eslint '**/*.{js,ts}' .eslintrc.js --ignore-pattern='!.eslintrc.js'",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "yarn lint --fix"
   },
   "author": "reside-eng",
   "license": "MIT",
@@ -38,16 +38,15 @@
   "devDependencies": {
     "@side-eng/eslint-config-base": "0.0.1",
     "@side-eng/eslint-config-prettier": "0.0.1",
-    "@types/express": "^4.17.2",
+    "@types/express": "^4.17.3",
     "@types/lodash": "^4.14.149",
-    "@types/node": "^13.5.0",
-    "@typescript-eslint/eslint-plugin": "^2.18.0",
-    "@typescript-eslint/parser": "^2.18.0",
+    "@types/node": "^13.7.7",
+    "@typescript-eslint/eslint-plugin": "^2.22.0",
+    "@typescript-eslint/parser": "^2.22.0",
     "eslint": "^6.8.0",
-    "firebase-functions-test": "^0.1.6",
     "husky": "4.2.3",
     "lint-staged": "10.0.8",
     "prettier": "^1.19.1",
-    "typescript": "^3.2.2"
+    "typescript": "^3.8.3"
   }
 }

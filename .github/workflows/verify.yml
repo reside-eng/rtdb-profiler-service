@@ -47,13 +47,6 @@ jobs:
           CI: true
         run: yarn install --frozen-lockfile
 
-      - name: Archive NPM Error Logs
-        uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: npm-error-logs
-          path: /home/runner/.npm/_logs
-
       - name: Verify App
         run: |
           yarn lint
@@ -64,4 +57,4 @@ jobs:
         env:
           NODE_ENV: production
         run: |
-          npm run build
+          yarn build

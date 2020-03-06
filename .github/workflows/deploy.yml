@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node-version: [10.x]
+        node-version: [12.x]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -62,7 +62,7 @@ jobs:
         env:
           NODE_ENV: production
         run: |
-          npm run build
+          yarn build
       
       - name: Archive Build Artifact
         uses: actions/upload-artifact@v1
