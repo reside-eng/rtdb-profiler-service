@@ -3,3 +3,4 @@ node_modules
 serviceAccount.json
 lib
 .env.private
+package-lock.json
