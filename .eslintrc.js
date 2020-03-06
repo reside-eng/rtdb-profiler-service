@@ -1,64 +1,36 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  'extends': [
-    'airbnb-base',
-    'prettier',
+  extends: [
+    '@side-eng/base',
+    '@side-eng/prettier',
     'plugin:@typescript-eslint/recommended',
     'prettier/@typescript-eslint',
-    "plugin:jsdoc/recommended"
   ],
-  root: true,
-  plugins: ['@typescript-eslint', 'prettier' , 'jsdoc'],
+  plugins: ['@typescript-eslint'],
   settings: {
     'import/resolver': {
       node: {
-        moduleDirectory: ['node_modules', '/'],
-        extensions: ['.js', '.jsx', '.ts', '.tsx']
-      }
+        extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
+      },
     },
-    react: {
-      version: '16.0'
-    }
-  },
-  env: {
-    browser: true,
-    node: true
+    'import/extensions': ['.mjs', '.js', '.jsx', '.ts', '.tsx'],
   },
   rules: {
-    '@typescript-eslint/no-explicit-any': 0,
-    'import/prefer-default-export': 0,
-    'no-shadow': 0,
-    'consistent-return': 0,
-    'no-new': 0,
-    'new-cap': 0,
-    'no-return-await': 2,
-    'jsdoc/newline-after-description': 0,
-    'jsdoc/require-returns-type': 0,
-    'jsdoc/require-param-type': 0,
-    'import/extensions': 0,
-    'no-console': 0,
-    'prettier/prettier': [
+    'import/extensions': [
       'error',
+      'ignorePackages',
       {
-        singleQuote: true, // airbnb
-        trailingComma: 'all', // airbnb
-      }
-    ]
+        mjs: 'never',
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
+
+    // FIXME: Remove when we are using a different logger other than console
+    'no-console': 0,
+    // FIXME: Remove once we fix all the <any> type definitions
+    '@typescript-eslint/no-explicit-any': 0,
   },
-  overrides: [
-    {
-      files: ['cmds/**'],
-      rules: {
-        'comma-dangle': ['error', { 'functions': 'never' }],
-        '@typescript-eslint/explicit-function-return-type': 0,
-        'prettier/prettier': [
-          'error',
-          {
-            singleQuote: true, // airbnb
-            trailingComma: 'none', // airbnb
-          }
-        ]
-      }
-    }
-  ]
-}
+};

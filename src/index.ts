@@ -1,4 +1,4 @@
-import { profileAndUpload } from './profilerService';
+import profileAndUpload from './profilerService';
 import { MINS_TO_MS_CONVERSION } from './constants';
 
 const TIMEOUT = 5; // In minutes
